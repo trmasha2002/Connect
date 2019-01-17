@@ -11,7 +11,6 @@ class User(db.Model):
     description = db.Column(db.String())
     image = db.Column(db.String())
 
-
     def __init__(self, email, user_name, password, link_for_connect, specialization, description, image):
         self.email = email
         self.user_name = user_name
@@ -52,15 +51,14 @@ class Idea(db.Model):
     description = db.Column(db.String())
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     image = db.Column(db.String())
-
+    favorite = db.Column(db.Boolean())
 
     def __init__(self, name, small_description, description, image):
         self.name = name
         self.small_description = small_description
         self.description = description
         self.image = image
-
-
+        self.favorite = False
     def save(self):
         db.session.add(self)
         db.session.commit()
@@ -68,7 +66,8 @@ class Idea(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
-
+    def like(self):
+        self.favorite = True
     @staticmethod
     def get_by_id(id):
         return db.session.query(Idea).filter(Idea.id == id).one()
@@ -82,4 +81,4 @@ class Idea(db.Model):
         return Idea.query.all()
 class IdeaSchema(ma.Schema):
     class Meta:
-        fields = ('name', 'small_description', 'description', 'image', 'id', 'author_id')
+        fields = ('name', 'small_description', 'description', 'image', 'id', 'author_id', 'favorite')

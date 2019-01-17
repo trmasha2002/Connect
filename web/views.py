@@ -53,6 +53,7 @@ def add_idea():
 
     idea = Idea(name, small_description, description, image)
     idea.author_id = session['id']
+    #idea.like()
     print(session['id'])
     db.session.add(idea)
     db.session.commit()
@@ -77,6 +78,20 @@ def get_my_ideas():
     ideas_schema = IdeaSchema(many=True)
     result = ideas_schema.dump(ideas)
     return jsonify(result.data)
+
+@app.route('/favorites', methods=['GET'])
+def get_favorites():
+    ideas = db.session.query(Idea).filter(Idea.favorite == True).all()
+    ideas_schema = IdeaSchema(many=True)
+    result = ideas_schema.dump(ideas)
+    return jsonify(result.data)
+@app.route('/favorites', methods=['GET'])
+def get_favorites():
+    ideas = db.session.query(Idea).filter(Idea.favorite == True).all()
+    ideas_schema = IdeaSchema(many=True)
+    result = ideas_schema.dump(ideas)
+    return jsonify(result.data)
+
 @app.route('/my_ideas/<int:idea_id>', methods=['GET'])
 def get_my_idea_id(idea_id):
     idea = Idea.get_by_id(idea_id)
