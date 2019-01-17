@@ -85,12 +85,7 @@ def get_favorites():
     ideas_schema = IdeaSchema(many=True)
     result = ideas_schema.dump(ideas)
     return jsonify(result.data)
-@app.route('/favorites', methods=['GET'])
-def get_favorites():
-    ideas = db.session.query(Idea).filter(Idea.favorite == True).all()
-    ideas_schema = IdeaSchema(many=True)
-    result = ideas_schema.dump(ideas)
-    return jsonify(result.data)
+
 
 @app.route('/my_ideas/<int:idea_id>', methods=['GET'])
 def get_my_idea_id(idea_id):
