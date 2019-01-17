@@ -42,7 +42,7 @@ class User(db.Model):
 
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ('email', 'user_name', 'password', 'link_for_connect', 'specialization', 'description', 'image')
+        fields = ('email', 'user_name', 'password', 'link_for_connect', 'specialization', 'description', 'image', 'id')
 
 
 class Idea(db.Model):
@@ -50,7 +50,9 @@ class Idea(db.Model):
     name = db.Column(db.String())
     small_description = db.Column(db.String())
     description = db.Column(db.String())
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     image = db.Column(db.String())
+
 
     def __init__(self, name, small_description, description, image):
         self.name = name
@@ -78,7 +80,6 @@ class Idea(db.Model):
     @staticmethod
     def get_all():
         return Idea.query.all()
-
 class IdeaSchema(ma.Schema):
     class Meta:
-        fields = ('name', 'small_description', 'description', 'image', 'id')
+        fields = ('name', 'small_description', 'description', 'image', 'id', 'author_id')

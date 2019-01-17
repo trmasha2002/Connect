@@ -12,21 +12,21 @@ def index():
     return render_template("main.html")
 
 
-@app.route("/register", methods=['GET', 'POST'])
-def registration():
-    form = RegisterForm()
-    if form.validate_on_submit():
-        user = User(form.email.data, form.user_name.data, form.password.data,
-                                    form.link_for_connect.data, form.specialization.data, form.description.data, form.image.data)
-        id = user.save()
-        session['login'] = form.user_name.data
-        session['is_auth'] = True
-        session['id'] = id
-        return redirect('/')
-    return render_template("register.html", form=form)
+#@app.route("/register", methods=['GET', 'POST'])
+#def registration():
+#    form = RegisterForm()
+#    if form.validate_on_submit():
+#        user = User(form.email.data, form.user_name.data, form.password.data,
+#                                    form.link_for_connect.data, form.specialization.data, form.description.data, form.image.data)
+#       id = user.save()
+#        session['login'] = form.user_name.data
+#        session['is_auth'] = True
+#        session['id'] = id
+#        return redirect('/')
+#    return render_template("register.html", form=form)
 
 
-@app.route("/register", methods=["POST"])
+@app.route("/users", methods=["POST"])
 def add_user():
     user_name = request.json['user_name']
     email = request.json['email']
@@ -40,7 +40,8 @@ def add_user():
     session['login'] = user_name
     session['is_auth'] = True
     session['id'] = id
-    return jsonify(user)
+    user_schema = UserSchema()
+    return user_schema.jsonify(user)
 
 
 @app.route("/ideas", methods=['POST'])
@@ -51,9 +52,10 @@ def add_idea():
     image = request.json['image']
 
     idea = Idea(name, small_description, description, image)
+    idea.author_id = session['id']
+    print(session['id'])
     db.session.add(idea)
     db.session.commit()
-
     idea_schema = IdeaSchema()
 
     return idea_schema.jsonify(idea)
@@ -68,6 +70,19 @@ def get_by_id_idea(idea_id):
     idea_schema = IdeaSchema()
     idea = Idea.get_by_id(idea_id)
     return idea_schema.jsonify(idea)
+
+@app.route('/my_ideas', methods=['GET'])
+def get_my_ideas():
+    ideas = db.session.query(Idea).filter(Idea.author_id == session['id']).all()
+    ideas_schema = IdeaSchema(many=True)
+    result = ideas_schema.dump(ideas)
+    return jsonify(result.data)
+@app.route('/my_ideas/<int:idea_id>', methods=['GET'])
+def get_my_idea_id(idea_id):
+    idea = Idea.get_by_id(idea_id)
+    idea_schema = IdeaSchema()
+    result = idea_schema.dump(idea)
+    return jsonify(result.data)
 
 @app.route('/ideas/<int:idea_id>', methods=['PUT'])
 def update_idea(idea_id):
@@ -110,6 +125,7 @@ def get_by_id_user(user_id):
     result = users_schema.dump(user)
     return jsonify(result.data)
 @app.route('/ideas/<int:idea_id>', methods=['DELETE'])
+
 def delete_by_id_idea(idea_id):
     idea = Idea.get_by_id(idea_id)
     idea.delete()
