@@ -1,5 +1,6 @@
 from web import app
 from web import db
+from web import ma
 class User(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     email = db.Column(db.String())
@@ -9,6 +10,8 @@ class User(db.Model):
     specialization = db.Column(db.String())
     description = db.Column(db.String())
     image = db.Column(db.String())
+
+
     def __init__(self, email, user_name, password, link_for_connect, specialization, description, image):
         self.email = email
         self.user_name = user_name
@@ -32,6 +35,15 @@ class User(db.Model):
     @staticmethod
     def update_by_id(id, key, value):
         return db.session.query(User).filter(User.id == id).update({key: value},synchronize_session='evaluate')
+    @staticmethod
+    def get_all():
+        return User.query.all()
+
+
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ('email', 'user_name', 'password', 'link_for_connect', 'specialization', 'description', 'image')
+
 
 class Idea(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -62,3 +74,11 @@ class Idea(db.Model):
     @staticmethod
     def update_by_id(id, key, value):
         db.session.query(Idea).filter(Idea.id == id).update({key:value},  synchronize_session='evaluate')
+
+    @staticmethod
+    def get_all():
+        return Idea.query.all()
+
+class IdeaSchema(ma.Schema):
+    class Meta:
+        fields = ('name', 'small_description', 'description', 'image', 'id')
