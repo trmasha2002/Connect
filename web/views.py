@@ -1,7 +1,8 @@
 from web.forms import *
 from web.models import *
 from web import ma
-from web.models import UserSchema
+from web.models.user import UserSchema, User
+from web.models.idea import IdeaSchema, Idea
 from flask import render_template, redirect, make_response, request, session, jsonify
 from werkzeug.utils import secure_filename
 from os import urandom
