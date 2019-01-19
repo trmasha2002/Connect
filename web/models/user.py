@@ -1,4 +1,6 @@
-from web import db
+from itsdangerous import Serializer
+
+from web import db, app
 from web import ma
 class User(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -9,21 +11,17 @@ class User(db.Model):
     specialization = db.Column(db.String())
     description = db.Column(db.String())
     image = db.Column(db.String())
-
+    token = db.Column(db.String())
     def __init__(self, email, user_name, password):
         self.email = email
         self.user_name = user_name
         self.password = password
 
-    def change_data(self, link_for_connect, specialization, description, image):
-        self.link_for_connect = link_for_connect
-        self.specialization = specialization
-        self.description = description
-        self.image = image
 
     def save(self):
         db.session.add(self)
         db.session.commit()
+        self.token = self.generate_auth_token()
         return self.id
 
     def delete(self):
@@ -39,8 +37,11 @@ class User(db.Model):
     def get_all():
         return User.query.all()
 
+    def generate_auth_token(self):
+        s = Serializer(app.config['SECRET_KEY'])
+        return s.dumps({'id': self.id})
 
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ('email', 'user_name', 'password', 'link_for_connect', 'specialization', 'description', 'image', 'id')
+        fields = ('email', 'user_name', 'password', 'link_for_connect', 'specialization', 'description', 'image', 'id', 'token')
 
