@@ -38,4 +38,4 @@ class Idea(db.Model):
         return Idea.query.all()
 class IdeaSchema(ma.Schema):
     class Meta:
-        fields = ('name', 'small_description', 'description', 'image', 'id', 'author_id', 'favorite')
+        fields = ('name', 'small_description', 'description', 'image', 'id')

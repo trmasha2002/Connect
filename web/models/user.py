@@ -10,10 +10,12 @@ class User(db.Model):
     description = db.Column(db.String())
     image = db.Column(db.String())
 
-    def __init__(self, email, user_name, password, link_for_connect, specialization, description, image):
+    def __init__(self, email, user_name, password):
         self.email = email
         self.user_name = user_name
         self.password = password
+
+    def change_data(self, link_for_connect, specialization, description, image):
         self.link_for_connect = link_for_connect
         self.specialization = specialization
         self.description = description
