@@ -3,6 +3,7 @@ from web import ma
 from web import db
 from web.models.user import UserSchema, User
 from web.models.idea import IdeaSchema, Idea
+from  web.models.session import SessionSchema, Session
 from flask import render_template, redirect, make_response, request, session, jsonify
 from werkzeug.utils import secure_filename
 from os import urandom
@@ -13,10 +14,12 @@ from flask_httpauth import HTTPBasicAuth
 from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
+import datetime
+
+now = datetime.datetime.now()
 from base64 import b64encode
 from web import app
 auth = HTTPBasicAuth()
-
 @app.route("/ideas", methods=['POST'])
 def add_idea():
     name = request.json['name']
@@ -78,7 +81,6 @@ def update_idea(idea_id):
     small_description = request.json['small_description']
     description = request.json['description']
     image = request.json['image']
-
     idea.name = name
     idea.small_description = small_description
     idea.description = description
@@ -104,18 +106,80 @@ def delete_by_id_idea(idea_id):
     idea_schema = IdeaSchema()
     return idea_schema.jsonify(idea)
 
+@app.route('/users', methods=['GET'])
+def get_users():
+    users = User.get_all()
+    users_schema = UserSchema(many=True)
+    result = users_schema.dump(users)
+    return jsonify(result.data)
+@app.route('/users/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = User.get_by_id(user_id)
+    user_schema = UserSchema()
+    return user_schema.jsonify(user)
+
 @app.route('/users', methods=['POST'])
 def new_user():
     user_name = request.json.get('user_name')
     email = request.json.get('email')
     password = request.json.get('password')
-   # if user_name is None or password is None:
-    #    abort(400)    # missing arguments
-    #if User.query.filter_by(user_name=user_name).first() is not None:
-    #    abort(400)    # existing user
+
     user = User(email, user_name, password)
     user.save()
-    print(user_name, password, email)
-    return (jsonify({'user_name': user.user_name}), 201,
-            {'Location': url_for('get_user', id=user.id, _external=True)})
+    user_schema = UserSchema()
+    return user_schema.jsonify(user)
 
+@app.route('/auth', methods=['GET', 'POST'])
+def auth():
+    login = request.json.get('login')
+    password = request.json.get('password')
+    user = db.session.query(User).filter(User.user_name == login).one()
+    if (password == user.password):
+        now = datetime.datetime.now()
+        session = Session(user.id, user.token, str(now))
+        session.save()
+    session_shecma = SessionSchema()
+    return session_shecma.jsonify(session)
+@app.route('/token', methods=['GET', 'POST'])
+def auth_token():
+    token = request.json.get('token')
+    session = db.session.query(Session).filter(Session.token == token).one()
+    session_shecma = SessionSchema()
+    return session_shecma.jsonify(session)
+@app.route('/sessions', methods=['GET', 'POST'])
+def get_sessions():
+    sessions = Session.get_all()
+    sessions_schema = SessionSchema(many=True)
+    result = sessions_schema.dump(sessions)
+    return jsonify(result.data)
+@app.route('/users', methods=['PUT'])
+def update_user():
+    user_schema = UserSchema()
+    token = request.json['token']
+    user = db.session.query(User).filter(User.token == token).one()
+    email = request.json['email']
+    user_name = request.json['user_name']
+    password = request.json['password']
+    link_for_connect = request.json['link_for_connect']
+    specialization = request.json['specialization']
+    description = request.json['description']
+    image = request.json['image']
+    user.email = email
+    user.user_name = user_name
+    user.password = password
+    user.link_for_connect = link_for_connect
+    user.specialization = specialization
+    user.description = description
+    user.image = image
+
+    db.session.commit()
+
+    return user_schema.jsonify(user)
+
+@app.route('/users', methods=['DELETE'])
+def delete_user():
+    token = request.json['token']
+    user = db.session.query(User).filter(User.token == token).one()
+    user.delete()
+    user_schema = UserSchema()
+    return user_schema.jsonify(user)
