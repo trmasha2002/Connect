@@ -131,20 +131,18 @@ def new_user():
 
 @app.route('/auth', methods=['GET', 'POST'])
 def auth():
+    session_shecma = SessionSchema()
+    token = request.json.get('token')
     login = request.json.get('login')
     password = request.json.get('password')
-    user = db.session.query(User).filter(User.user_name == login).one()
-    if (password == user.password):
-        now = datetime.datetime.now()
-        session = Session(user.id, user.token, str(now))
-        session.save()
-    session_shecma = SessionSchema()
-    return session_shecma.jsonify(session)
-@app.route('/token', methods=['GET', 'POST'])
-def auth_token():
-    token = request.json.get('token')
-    session = db.session.query(Session).filter(Session.token == token).one()
-    session_shecma = SessionSchema()
+    if (len(db.session.query(Session).filter(Session.token == token).all()) > 0):
+        session = db.session.query(Session).filter(Session.token == token).one()
+    else:
+        user = db.session.query(User).filter(User.user_name == login).one()
+        if (token == user.token or password == user.password):
+            now = datetime.datetime.now()
+            session = Session(user.id, user.token, str(now))
+            session.save()
     return session_shecma.jsonify(session)
 @app.route('/sessions', methods=['GET', 'POST'])
 def get_sessions():
