@@ -81,7 +81,6 @@ def update_idea(idea_id):
     small_description = request.json['small_description']
     description = request.json['description']
     image = request.json['image']
-
     idea.name = name
     idea.small_description = small_description
     idea.description = description
@@ -141,17 +140,23 @@ def auth():
         session.save()
     session_shecma = SessionSchema()
     return session_shecma.jsonify(session)
-    return jsonify({'status:':"OK"})
+@app.route('/token', methods=['GET', 'POST'])
+def auth_token():
+    token = request.json.get('token')
+    session = db.session.query(Session).filter(Session.token == token).one()
+    session_shecma = SessionSchema()
+    return session_shecma.jsonify(session)
 @app.route('/sessions', methods=['GET', 'POST'])
 def get_sessions():
     sessions = Session.get_all()
     sessions_schema = SessionSchema(many=True)
     result = sessions_schema.dump(sessions)
     return jsonify(result.data)
-@app.route('/users/<int:user_id>', methods=['PUT'])
-def update_user(user_id):
+@app.route('/users', methods=['PUT'])
+def update_user():
     user_schema = UserSchema()
-    user = User.get_by_id(user_id)
+    token = request.json['token']
+    user = db.session.query(User).filter(User.token == token).one()
     email = request.json['email']
     user_name = request.json['user_name']
     password = request.json['password']
@@ -171,10 +176,10 @@ def update_user(user_id):
 
     return user_schema.jsonify(user)
 
-@app.route('/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    user_schema = UserSchema()
-    user = User.get_by_id(user_id)
+@app.route('/users', methods=['DELETE'])
+def delete_user():
+    token = request.json['token']
+    user = db.session.query(User).filter(User.token == token).one()
     user.delete()
     user_schema = UserSchema()
     return user_schema.jsonify(user)

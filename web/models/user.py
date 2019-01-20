@@ -2,6 +2,7 @@ from itsdangerous import Serializer
 
 from web import db, app
 from web import ma
+from passlib.hash import pbkdf2_sha256
 class User(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     email = db.Column(db.String())
@@ -16,12 +17,11 @@ class User(db.Model):
         self.email = email
         self.user_name = user_name
         self.password = password
-
+        self.token = pbkdf2_sha256.hash(password)
 
     def save(self):
         db.session.add(self)
         db.session.commit()
-        self.token = self.generate_auth_token()
         db.session.commit()
         return self.id
 
