@@ -22,6 +22,7 @@ class User(db.Model):
         db.session.add(self)
         db.session.commit()
         self.token = self.generate_auth_token()
+        db.session.commit()
         return self.id
 
     def delete(self):

@@ -3,6 +3,7 @@ from web import ma
 from web import db
 from web.models.user import UserSchema, User
 from web.models.idea import IdeaSchema, Idea
+from  web.models.session import SessionSchema, Session
 from flask import render_template, redirect, make_response, request, session, jsonify
 from werkzeug.utils import secure_filename
 from os import urandom
@@ -13,10 +14,12 @@ from flask_httpauth import HTTPBasicAuth
 from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
+import datetime
+
+now = datetime.datetime.now()
 from base64 import b64encode
 from web import app
 auth = HTTPBasicAuth()
-
 @app.route("/ideas", methods=['POST'])
 def add_idea():
     name = request.json['name']
@@ -124,16 +127,27 @@ def new_user():
 
     user = User(email, user_name, password)
     user.save()
-    print(user_name, password, email)
     user_schema = UserSchema()
     return user_schema.jsonify(user)
 
-@app.route('/auth', methods=['POST'])
+@app.route('/auth', methods=['GET', 'POST'])
 def auth():
     login = request.json.get('login')
     password = request.json.get('password')
-
-
+    user = db.session.query(User).filter(User.user_name == login).one()
+    if (password == user.password):
+        now = datetime.datetime.now()
+        session = Session(user.id, user.token, str(now))
+        session.save()
+    session_shecma = SessionSchema()
+    return session_shecma.jsonify(session)
+    return jsonify({'status:':"OK"})
+@app.route('/sessions', methods=['GET', 'POST'])
+def get_sessions():
+    sessions = Session.get_all()
+    sessions_schema = SessionSchema(many=True)
+    result = sessions_schema.dump(sessions)
+    return jsonify(result.data)
 @app.route('/users/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
     user_schema = UserSchema()
