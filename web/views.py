@@ -4,6 +4,7 @@ from web import db
 from web.models.user import UserSchema, User
 from web.models.idea import IdeaSchema, Idea
 from  web.models.session import SessionSchema, Session
+from web.models.subscriptions import Subscritions, SubscriptionsSchema
 from flask import render_template, redirect, make_response, request, session, jsonify
 from werkzeug.utils import secure_filename
 from os import urandom
@@ -51,18 +52,47 @@ def get_my_ideas():
     result = ideas_schema.dump(ideas)
     return jsonify(result.data)
 
-@app.route('/favorites', methods=['GET'])
+@app.route('/ideas/<int:idea_id>/like', methods=['GET'])
+def like(idea_id):
+    token = request.json['token']
+    subscription_schema = SubscriptionsSchema()
+    user = db.session.query(User).filter(User.token == token).one()
+    print("Request user id is {} and idea id is {}".format(user.id, idea_id))
+    idea = Idea.get_by_id(idea_id)
+    if len(db.session.query(Subscritions).filter(Subscritions.user_id == user.id).filter(Subscritions.idea_id == idea_id).all()) > 0:
+        subscription = db.session.query(Subscritions).filter(Subscritions.user_id == user.id).filter(Subscritions.idea_id == idea_id).one()
+    else:
+        subscription = Subscritions(user.id, idea_id)
+        subscription.save()
+    return subscription_schema.jsonify(subscription)
+
+@app.route('/ideas/<int:idea_id>/likes', methods=['GET'])
+def get_likes(idea_id):
+    users_schema = UserSchema(many=True)
+    if len(db.session.query(Subscritions).filter(Subscritions.idea_id == idea_id).all()) > 0:
+        subscriptions = db.session.query(Subscritions).filter(Subscritions.idea_id == idea_id).all()
+        users = []
+        for subscription in subscriptions:
+            user = db.session.query(User).filter(User.id == subscription.user_id).one()
+            users.append(user)
+        result = users_schema.dump(users)
+        print(result)
+        return jsonify(result.data)
+    else:
+        return jsonify({[]})
+@app.route('/favorites', methods=['GET', 'POST'])
 def get_favorites():
-    ideas = db.session.query(Idea).filter(Idea.favorite == True).all()
-    ideas_schema = IdeaSchema(many=True)
-    result = ideas_schema.dump(ideas)
-    return jsonify(result.data)
-
-@app.route('/favorides<int:idea_id>', methods=['GET'])
-def get_favorite_by_idea(idea_id):
-    idea = get_by_id_idea(idea_id)
-
-
+    token = request.json['token']
+    user = db.session.query(User).filter(User.token == token).one()
+    if (len(db.session.query(Subscritions).filter(Subscritions.user_id == user.id).all()) > 0):
+        subscriptions = db.session.query(Subscritions).filter(Subscritions.user_id == user.id).all()
+        ideas = []
+        for subscription in subscriptions:
+            idea = db.session.query(Idea).filter(Idea.id == subscription.idea_id).one()
+            ideas.append(idea)
+        ideas_schema = IdeaSchema(many=True)
+        result = ideas_schema.dump(ideas)
+        return jsonify(result.data)
 
 @app.route('/ideas/<int:idea_id>', methods=['PUT'])
 def update_idea(idea_id):
