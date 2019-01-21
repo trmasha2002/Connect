@@ -23,24 +23,18 @@ auth = HTTPBasicAuth()
 @app.route("/ideas", methods=['POST'])
 def add_idea():
     name = request.json['name']
+    token = request.json['token']
+    user = db.session.query(User).filter(User.token == token).one()
     small_description = request.json['small_description']
     description = request.json['description']
     image = request.json['image']
-
     idea = Idea(name, small_description, description, image)
-    #idea.author_id = session['id']
-    #idea.like()
-    #print(session['id'])
+    idea.author_id = user.id
+    idea_schema = IdeaSchema()
     db.session.add(idea)
     db.session.commit()
-    idea_schema = IdeaSchema()
 
     return idea_schema.jsonify(idea)
-    #if form.validate_on_submit():
-    #    idea = Idea(form.name.data, form.small_description.data, form.description.data, form.image.data)
-    #    id = idea.save()
-    #    return redirect('/')
-    #return render_template("add_idea.html", form=form)
 
 @app.route('/ideas/<int:idea_id>', methods=['GET'])
 def get_by_id_idea(idea_id):
@@ -50,7 +44,9 @@ def get_by_id_idea(idea_id):
 
 @app.route('/my_ideas', methods=['GET'])
 def get_my_ideas():
-    ideas = db.session.query(Idea).filter(Idea.author_id == session['id']).all()
+    token = request.json['token']
+    user = db.session.query(User).filter(User.token == token).one()
+    ideas = db.session.query(Idea).filter(Idea.author_id == user.id).all()
     ideas_schema = IdeaSchema(many=True)
     result = ideas_schema.dump(ideas)
     return jsonify(result.data)
@@ -66,12 +62,7 @@ def get_favorites():
 def get_favorite_by_idea(idea_id):
     idea = get_by_id_idea(idea_id)
 
-@app.route('/my_ideas/<int:idea_id>', methods=['GET'])
-def get_my_idea_id(idea_id):
-    idea = Idea.get_by_id(idea_id)
-    idea_schema = IdeaSchema()
-    result = idea_schema.dump(idea)
-    return jsonify(result.data)
+
 
 @app.route('/ideas/<int:idea_id>', methods=['PUT'])
 def update_idea(idea_id):
@@ -131,20 +122,18 @@ def new_user():
 
 @app.route('/auth', methods=['GET', 'POST'])
 def auth():
+    session_shecma = SessionSchema()
+    token = request.json.get('token')
     login = request.json.get('login')
     password = request.json.get('password')
-    user = db.session.query(User).filter(User.user_name == login).one()
-    if (password == user.password):
-        now = datetime.datetime.now()
-        session = Session(user.id, user.token, str(now))
-        session.save()
-    session_shecma = SessionSchema()
-    return session_shecma.jsonify(session)
-@app.route('/token', methods=['GET', 'POST'])
-def auth_token():
-    token = request.json.get('token')
-    session = db.session.query(Session).filter(Session.token == token).one()
-    session_shecma = SessionSchema()
+    if (len(db.session.query(Session).filter(Session.token == token).all()) > 0):
+        session = db.session.query(Session).filter(Session.token == token).one()
+    else:
+        user = db.session.query(User).filter(User.user_name == login).one()
+        if (token == user.token or password == user.password):
+            now = datetime.datetime.now()
+            session = Session(user.id, user.token, str(now))
+            session.save()
     return session_shecma.jsonify(session)
 @app.route('/sessions', methods=['GET', 'POST'])
 def get_sessions():
@@ -152,6 +141,7 @@ def get_sessions():
     sessions_schema = SessionSchema(many=True)
     result = sessions_schema.dump(sessions)
     return jsonify(result.data)
+
 @app.route('/users', methods=['PUT'])
 def update_user():
     user_schema = UserSchema()
@@ -171,11 +161,8 @@ def update_user():
     user.specialization = specialization
     user.description = description
     user.image = image
-
     db.session.commit()
-
     return user_schema.jsonify(user)
-
 @app.route('/users', methods=['DELETE'])
 def delete_user():
     token = request.json['token']
