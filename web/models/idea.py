@@ -1,6 +1,7 @@
 from web import app
 from web import db
 from web import ma
+from web.models.user import User
 class Idea(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String())
@@ -8,14 +9,16 @@ class Idea(db.Model):
     description = db.Column(db.String())
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     image = db.Column(db.String())
-    favorite = db.Column(db.Boolean())
+    likes = db.Column(db.Integer())
+    dizlikes = db.Column(db.Integer())
 
     def __init__(self, name, small_description, description, image):
         self.name = name
         self.small_description = small_description
         self.description = description
         self.image = image
-        self.favorite = False
+        self.likes = 0
+        self.dizlikes = 0
     def save(self):
         db.session.add(self)
         db.session.commit()
@@ -38,4 +41,4 @@ class Idea(db.Model):
         return Idea.query.all()
 class IdeaSchema(ma.Schema):
     class Meta:
-        fields = ('name', 'author_id', 'small_description', 'description', 'image', 'id')
+        fields = ('name', 'author_id', 'small_description', 'description', 'image', 'likes', 'dizlikes', 'id')
