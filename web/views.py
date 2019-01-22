@@ -187,7 +187,7 @@ def get_users():
     return jsonify(result.data)
 
 
-@app.route('/users', methods=['GET'])
+@app.route('/profile', methods=['GET'])
 def get_user():
     token = request.json['token']
     user = db.session.query(User).filter(User.token == token).one()
