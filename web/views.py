@@ -206,7 +206,11 @@ def new_user():
     user_schema = UserSchema()
     return user_schema.jsonify(user)
 
-
+@app.route('/users/<int:user_id>', methods=['POST'])
+def get_user(user_id):
+    user = User.get_by_id(user_id)
+    user_schema = UserSchema()
+    return user_schema.jsonify(user)
 @app.route('/auth', methods=['GET', 'POST'])
 def auth():
     session_shecma = SessionSchema()
