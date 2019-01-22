@@ -207,7 +207,7 @@ def new_user():
     return user_schema.jsonify(user)
 
 @app.route('/users/<int:user_id>', methods=['POST'])
-def get_user(user_id):
+def get_user_by_id(user_id):
     user = User.get_by_id(user_id)
     user_schema = UserSchema()
     return user_schema.jsonify(user)
