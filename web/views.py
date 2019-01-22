@@ -55,7 +55,7 @@ def get_my_ideas():
     return jsonify(result.data)
 
 
-@app.route('/ideas/<int:idea_id>/make_favorite', methods=['GET', 'POST'])
+@app.route('/ideas/<int:idea_id>/make_favorite', methods=['POST'])
 def make_favorite(idea_id):
     token = request.json['token']
     subscription_schema = SubscriptionsSchema()
@@ -187,7 +187,7 @@ def get_users():
     return jsonify(result.data)
 
 
-@app.route('/users', methods=['GET', 'POST'])
+@app.route('/users', methods=['GET'])
 def get_user():
     token = request.json['token']
     user = db.session.query(User).filter(User.token == token).one()
