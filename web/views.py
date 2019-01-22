@@ -21,7 +21,7 @@ def auth(token):
 """
 
 
-@app.route("/ideas", methods=['GET'])
+@app.route("/ideas", methods=['POST'])
 def add_idea():
     name = request.json['name']
     token = request.json['token']
@@ -39,7 +39,7 @@ def add_idea():
     return idea_schema.jsonify(idea)
 
 
-@app.route('/ideas/<int:idea_id>', methods=['POST'])
+@app.route('/ideas/<int:idea_id>', methods=['GET'])
 def get_by_id_idea(idea_id):
     idea_schema = IdeaSchema()
     idea = Idea.get_by_id(idea_id)
@@ -165,7 +165,7 @@ def update_idea(idea_id):
     return idea_schema.jsonify(idea)
 
 
-@app.route('/ideas', methods=['POST'])
+@app.route('/ideas', methods=['GET'])
 def get_ideas():
     ideas = Idea.get_all()
     ideas_schema = IdeaSchema(many=True)
@@ -181,7 +181,7 @@ def delete_by_id_idea(idea_id):
     return idea_schema.jsonify(idea)
 
 
-@app.route('/users', methods=['POST'])
+@app.route('/users', methods=['GET'])
 def get_users():
     users = User.get_all()
     users_schema = UserSchema(many=True)
@@ -197,7 +197,7 @@ def get_user():
     return user_schema.jsonify(user)
 
 
-@app.route('/users', methods=['GET'])
+@app.route('/users', methods=['POST'])
 def new_user():
     user_name = request.json.get('user_name')
     email = request.json.get('email')
@@ -208,7 +208,7 @@ def new_user():
     user_schema = UserSchema()
     return user_schema.jsonify(user)
 
-@app.route('/users/<int:user_id>', methods=['POST'])
+@app.route('/users/<int:user_id>', methods=['GET'])
 def get_user_b(user_id):
     user = User.get_by_id(user_id)
     user_schema = UserSchema()
