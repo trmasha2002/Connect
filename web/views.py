@@ -5,6 +5,8 @@ from web.models.user import UserSchema, User
 from web.models.idea import IdeaSchema, Idea
 from  web.models.session import SessionSchema, Session
 from web.models.subscriptions import Subscritions, SubscriptionsSchema
+from web.models.likes import Likes, LikesSchema
+from web.models.dizlikes import Dizlikes, DizlikesSchema
 from flask import render_template, redirect, make_response, request, session, jsonify
 from werkzeug.utils import secure_filename
 from os import urandom
@@ -21,6 +23,10 @@ now = datetime.datetime.now()
 from base64 import b64encode
 from web import app
 auth = HTTPBasicAuth()
+"""
+def auth(token):
+    return (len(db.session.query(Session).filter(Session.token == token).all()) > 0)
+"""
 @app.route("/ideas", methods=['POST'])
 def add_idea():
     name = request.json['name']
@@ -52,8 +58,9 @@ def get_my_ideas():
     result = ideas_schema.dump(ideas)
     return jsonify(result.data)
 
-@app.route('/ideas/<int:idea_id>/like', methods=['GET'])
-def like(idea_id):
+@app.route('/ideas/<int:idea_id>/make_favorite', methods=['GET'])
+
+def make_favorite(idea_id):
     token = request.json['token']
     subscription_schema = SubscriptionsSchema()
     user = db.session.query(User).filter(User.token == token).one()
@@ -61,13 +68,14 @@ def like(idea_id):
     idea = Idea.get_by_id(idea_id)
     if len(db.session.query(Subscritions).filter(Subscritions.user_id == user.id).filter(Subscritions.idea_id == idea_id).all()) > 0:
         subscription = db.session.query(Subscritions).filter(Subscritions.user_id == user.id).filter(Subscritions.idea_id == idea_id).one()
+        subscription.delete()
     else:
         subscription = Subscritions(user.id, idea_id)
         subscription.save()
     return subscription_schema.jsonify(subscription)
 
-@app.route('/ideas/<int:idea_id>/likes', methods=['GET'])
-def get_likes(idea_id):
+@app.route('/ideas/<int:idea_id>/favorites', methods=['GET'])
+def favorites(idea_id):
     users_schema = UserSchema(many=True)
     if len(db.session.query(Subscritions).filter(Subscritions.idea_id == idea_id).all()) > 0:
         subscriptions = db.session.query(Subscritions).filter(Subscritions.idea_id == idea_id).all()
@@ -80,8 +88,9 @@ def get_likes(idea_id):
         return jsonify(result.data)
     else:
         return jsonify({[]})
-@app.route('/favorites', methods=['GET', 'POST'])
-def get_favorites():
+
+@app.route('/favorite_ideas', methods=['GET', 'POST'])
+def favorite_ideas():
     token = request.json['token']
     user = db.session.query(User).filter(User.token == token).one()
     if (len(db.session.query(Subscritions).filter(Subscritions.user_id == user.id).all()) > 0):
@@ -93,7 +102,32 @@ def get_favorites():
         ideas_schema = IdeaSchema(many=True)
         result = ideas_schema.dump(ideas)
         return jsonify(result.data)
+@app.route('/ideas/<int:idea_id>/like', methods=['GET', 'POST'])
+def like(idea_id):
+    token = request.json['token']
+    user = db.session.query(User).filter(User.token == token).one()
+    print(user.id, idea_id)
+    if (len(db.session.query(Likes).filter(Likes.idea_id == idea_id).filter(Likes.user_id == user.id).all()) > 0):
+        like = db.session.query(Likes).filter(Likes.idea_id == idea_id).filter(Likes.user_id == user.id).one()
+        like.delete()
+    else:
+        like = Likes(user.id, idea_id)
+        like.save()
+    like_schema = LikesSchema()
+    return like_schema.jsonify(like)
+@app.route('/ideas/<int:idea_id>/dizlike', methods=['GET', 'POST'])
+def dizlike(idea_id):
+    token = request.json['token']
 
+    user = db.session.query(User).filter(User.token == token).one()
+    if len(db.session.query(Dizlikes).filter(Dizlikes.idea_id == idea_id and Dizlikes.user_id == user.id).all()) > 0:
+        dizlike = db.session.query(Dizlikes).filter(Dizlikes.idea_id == idea_id and Dizlikes.user_id == user.id).one()
+        dizlike.delete()
+    else:
+        dizlike = Dizlikes(user.id, idea_id)
+        dizlike.save()
+    dizlike_schema = DizlikesSchema()
+    return dizlike_schema.jsonify(dizlike)
 @app.route('/ideas/<int:idea_id>', methods=['PUT'])
 def update_idea(idea_id):
     idea_schema = IdeaSchema()
