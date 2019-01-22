@@ -100,7 +100,8 @@ def favorite_ideas():
         ideas = []
         for subscription in subscriptions:
             idea = db.session.query(Idea).filter(Idea.id == subscription.idea_id).one()
-            ideas.append(idea)
+            if (idea.author_id != user.id):
+                ideas.append(idea)
         ideas_schema = IdeaSchema(many=True)
         result = ideas_schema.dump(ideas)
         return jsonify(result.data)
