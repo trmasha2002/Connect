@@ -48,7 +48,7 @@ def get_by_id_idea(idea_id):
 
 @app.route('/my_ideas', methods=['GET', 'POST'])
 def get_my_ideas():
-    token = request.headers['token']
+    token = request.json['token']
     user = db.session.query(User).filter(User.token == token).one()
     ideas = db.session.query(Idea).filter(Idea.author_id == user.id).all()
     ideas_schema = IdeaSchema(many=True)
