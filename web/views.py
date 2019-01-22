@@ -190,9 +190,9 @@ def get_users():
     return jsonify(result.data)
 
 
-@app.route('/profile', methods=['GET'])
+@app.route('/profile', methods=['POST'])
 def get_user():
-    token = request.headers['token']
+    token = request.json['token']
     user = db.session.query(User).filter(User.token == token).one()
     user_schema = UserSchema()
     return user_schema.jsonify(user)
