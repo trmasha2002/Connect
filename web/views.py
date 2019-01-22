@@ -195,7 +195,7 @@ def get_user():
     return user_schema.jsonify(user)
 
 
-@app.route('/users', methods=['GET', 'POST'])
+@app.route('/users', methods=['POST'])
 def new_user():
     user_name = request.json.get('user_name')
     email = request.json.get('email')
