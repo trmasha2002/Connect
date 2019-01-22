@@ -38,14 +38,14 @@ def add_idea():
     return idea_schema.jsonify(idea)
 
 
-@app.route('/ideas/<int:idea_id>', methods=['GET'])
+@app.route('/ideas', methods=['GET'])
 def get_by_id_idea(idea_id):
     idea_schema = IdeaSchema()
     idea = Idea.get_by_id(idea_id)
     return idea_schema.jsonify(idea)
 
 
-@app.route('/my_ideas', methods=['GET'])
+@app.route('/my_ideas', methods=['GET', 'POST'])
 def get_my_ideas():
     token = request.headers['token']
     user = db.session.query(User).filter(User.token == token).one()
@@ -55,7 +55,7 @@ def get_my_ideas():
     return jsonify(result.data)
 
 
-@app.route('/ideas/<int:idea_id>/make_favorite', methods=['GET'])
+@app.route('/ideas/<int:idea_id>/make_favorite', methods=['GET', 'POST'])
 def make_favorite(idea_id):
     token = request.json['token']
     subscription_schema = SubscriptionsSchema()
@@ -73,7 +73,7 @@ def make_favorite(idea_id):
     return subscription_schema.jsonify(subscription)
 
 
-@app.route('/ideas/<int:idea_id>/favorites', methods=['GET'])
+@app.route('/ideas/<int:idea_id>/favorites', methods=['GET', 'POST'])
 def favorites(idea_id):
     users_schema = UserSchema(many=True)
     if len(db.session.query(Subscritions).filter(Subscritions.idea_id == idea_id).all()) > 0:
@@ -163,7 +163,7 @@ def update_idea(idea_id):
     return idea_schema.jsonify(idea)
 
 
-@app.route('/ideas', methods=['GET'])
+@app.route('/ideas', methods=['POST'])
 def get_ideas():
     ideas = Idea.get_all()
     ideas_schema = IdeaSchema(many=True)
@@ -179,7 +179,7 @@ def delete_by_id_idea(idea_id):
     return idea_schema.jsonify(idea)
 
 
-@app.route('/users', methods=['GET'])
+@app.route('/users', methods=['POST'])
 def get_users():
     users = User.get_all()
     users_schema = UserSchema(many=True)
@@ -187,14 +187,15 @@ def get_users():
     return jsonify(result.data)
 
 
-@app.route('/users/<int:user_id>', methods=['GET'])
-def get_user(user_id):
-    user = User.get_by_id(user_id)
+@app.route('/users', methods=['GET', 'POST'])
+def get_user():
+    token = request.json['token']
+    user = db.session.query(User).filter(User.token == token).one()
     user_schema = UserSchema()
     return user_schema.jsonify(user)
 
 
-@app.route('/users', methods=['POST'])
+@app.route('/users', methods=['GET', 'POST'])
 def new_user():
     user_name = request.json.get('user_name')
     email = request.json.get('email')
