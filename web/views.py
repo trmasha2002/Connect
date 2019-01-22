@@ -31,12 +31,11 @@ def add_idea():
     image = request.json['image']
     idea = Idea(name, small_description, description, image)
     idea.author_id = user.id
-    subscription = Subscritions(user.id, idea.id)
-    subscription.save()
     idea_schema = IdeaSchema()
     db.session.add(idea)
     db.session.commit()
-
+    subscription = Subscritions(user.id, idea.id)
+    subscription.save()
     return idea_schema.jsonify(idea)
 
 
@@ -97,6 +96,7 @@ def favorite_ideas():
     user = db.session.query(User).filter(User.token == token).one()
     if (len(db.session.query(Subscritions).filter(Subscritions.user_id == user.id).all()) > 0):
         subscriptions = db.session.query(Subscritions).filter(Subscritions.user_id == user.id).all()
+        print(subscriptions)
         ideas = []
         for subscription in subscriptions:
             idea = db.session.query(Idea).filter(Idea.id == subscription.idea_id).one()
