@@ -1,3 +1,5 @@
+from sqlalchemy import desc
+
 from web import app
 from web import db
 from web import ma
@@ -11,7 +13,7 @@ class Idea(db.Model):
     image = db.Column(db.String())
     likes = db.Column(db.Integer())
     dizlikes = db.Column(db.Integer())
-
+    sum_diff = db.Column(db.Integer())
     def __init__(self, name, small_description, description, image):
         self.name = name
         self.small_description = small_description
@@ -19,6 +21,7 @@ class Idea(db.Model):
         self.image = image
         self.likes = 0
         self.dizlikes = 0
+        self.sum_diff = 0
     def save(self):
         db.session.add(self)
         db.session.commit()
@@ -26,8 +29,6 @@ class Idea(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
-    def like(self):
-        self.favorite = True
     @staticmethod
     def get_by_id(id):
         return db.session.query(Idea).filter(Idea.id == id).one()
@@ -38,7 +39,9 @@ class Idea(db.Model):
 
     @staticmethod
     def get_all():
-        return Idea.query.all()
+        print(Idea.query.all())
+        print(Idea.query.order_by(desc('sum_diff')))
+        return Idea.query.order_by(desc('sum_diff'))
 class IdeaSchema(ma.Schema):
     class Meta:
         fields = ('name', 'author_id', 'small_description', 'description', 'image', 'likes', 'dizlikes', 'id')
