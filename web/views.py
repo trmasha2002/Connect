@@ -21,7 +21,7 @@ def auth(token):
 """
 
 
-@app.route("/ideas", methods=['POST'])
+@app.route("/ideas", methods=['GET'])
 def add_idea():
     name = request.json['name']
     token = request.json['token']
@@ -31,6 +31,8 @@ def add_idea():
     image = request.json['image']
     idea = Idea(name, small_description, description, image)
     idea.author_id = user.id
+    subscription = Subscritions(user.id, idea.id)
+    subscription.save()
     idea_schema = IdeaSchema()
     db.session.add(idea)
     db.session.commit()
@@ -38,7 +40,7 @@ def add_idea():
     return idea_schema.jsonify(idea)
 
 
-@app.route('/ideas', methods=['GET'])
+@app.route('/ideas/<int:idea_id>', methods=['POST'])
 def get_by_id_idea(idea_id):
     idea_schema = IdeaSchema()
     idea = Idea.get_by_id(idea_id)
@@ -55,7 +57,7 @@ def get_my_ideas():
     return jsonify(result.data)
 
 
-@app.route('/ideas/<int:idea_id>/make_favorite', methods=['POST'])
+@app.route('/ideas/<int:idea_id>/make_favorite', methods=['GET', 'POST'])
 def make_favorite(idea_id):
     token = request.json['token']
     subscription_schema = SubscriptionsSchema()
@@ -207,7 +209,7 @@ def new_user():
     return user_schema.jsonify(user)
 
 @app.route('/users/<int:user_id>', methods=['POST'])
-def get_user_by_id(user_id):
+def get_user_b(user_id):
     user = User.get_by_id(user_id)
     user_schema = UserSchema()
     return user_schema.jsonify(user)
